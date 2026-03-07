@@ -2,7 +2,7 @@ import { Sidebar } from "@/components/sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, Sparkles, Star } from "lucide-react"
+import { ExternalLink, Sparkles} from "lucide-react"
 // 1. 在文件顶部引入 supabase 客户端
 import { supabase } from "@/lib/supabase"
 
