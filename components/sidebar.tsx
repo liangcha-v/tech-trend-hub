@@ -28,6 +28,7 @@ export function Sidebar() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const currentSource = searchParams.get("source") || "all"
+  const currentView = searchParams.get("view")
 
   // --- 新增：记录哪个源正在同步的状态 ---
   const [syncingId, setSyncingId] = React.useState<string | null>(null)
@@ -53,6 +54,10 @@ export function Sidebar() {
     }
   }
 
+  const handleFavoritesClick = () => {
+    router.push("/?view=favorites")
+  }
+
   return (
     <div className="w-64 border-r bg-card flex flex-col h-screen sticky top-0">
       <div className="p-6 flex items-center gap-2">
@@ -72,13 +77,13 @@ export function Sidebar() {
               {menuItems.map((item) => (
                 <Button
                   key={item.id}
-                  variant={currentSource === item.id ? "secondary" : "ghost"}
+                  variant={currentView !== "favorites" && currentSource === item.id ? "secondary" : "ghost"}
                   // --- 修改此处 onClick ---
                   onClick={() => handleItemClick(item.id)}
                   disabled={syncingId === item.id}
                   className={cn(
                     "w-full justify-start gap-3 text-sm font-medium transition-all",
-                    currentSource === item.id ? "bg-secondary shadow-sm" : "hover:bg-ghost"
+                    currentView !== "favorites" && currentSource === item.id ? "bg-secondary shadow-sm" : "hover:bg-ghost"
                   )}
                 >
                   {/* --- 动态图标：同步时转圈，平时显示原图标 --- */}
@@ -87,7 +92,7 @@ export function Sidebar() {
                   ) : (
                     <item.icon className={cn(
                       "h-4 w-4",
-                      currentSource === item.id ? "text-primary" : "text-muted-foreground"
+                      currentView !== "favorites" && currentSource === item.id ? "text-primary" : "text-muted-foreground"
                     )} />
                   )}
                   {item.name}
@@ -103,7 +108,14 @@ export function Sidebar() {
               个人空间
             </h2>
             <div className="space-y-1">
-              <Button variant="ghost" className="w-full justify-start gap-3 text-sm font-medium text-muted-foreground">
+              <Button
+                variant={currentView === "favorites" ? "secondary" : "ghost"}
+                onClick={handleFavoritesClick}
+                className={cn(
+                  "w-full justify-start gap-3 text-sm font-medium",
+                  currentView === "favorites" ? "bg-secondary shadow-sm text-foreground" : "text-muted-foreground"
+                )}
+              >
                 <Bookmark className="h-4 w-4" />
                 我的收藏
               </Button>
