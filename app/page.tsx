@@ -16,12 +16,14 @@ export default async function Home({
     .from("trends")
     .select("*")
     .order("created_at", { ascending: false })
+    .not("ai_summary", "is", null)
+    .neq("ai_summary", "")
 
   if (!showFavoritesOnly && source && source !== "all") {
     query = query.eq("source", source)
   }
 
-  const { data: trends } = await query.limit(showFavoritesOnly ? 200 : 12)
+  const { data: trends } = await query.limit(9)
 
   const title = showFavoritesOnly
     ? "我的收藏"
