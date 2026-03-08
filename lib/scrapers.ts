@@ -1,6 +1,6 @@
 import RSSParser from 'rss-parser';
 import { supabase } from './supabase';
-import {generateAISummary} from './ai'
+import { generateAISummaryStrict } from './ai'
 
 const parser = new RSSParser();
 
@@ -237,24 +237,19 @@ export async function executeScrape(config: ScraperConfig): Promise<boolean> {
 
     if (finalData.length === 0) return false;
 
-    if (finalData.length === 0) return false;
+    console.log(`[${config.name}] 正在为 ${finalData.length} 条数据生成 AI 摘要...`);
+    const dataWithAI = await Promise.all(
+      finalData.map(async (item) => {
+        const summary = await generateAISummaryStrict(item.title, item.description);
+        return { ...item, ai_summary: summary };
+      })
+    );
 
-// 🚀 新增：为前 5 条数据补充 AI 总结
-console.log(`[${config.name}] 正在生成 AI 摘要...`);
-const dataWithAI = await Promise.all(
-  finalData.map(async (item, index) => {
-    // 仅对前 5 条生成摘要，且如果已有摘要则跳过（如果是更新操作）
-    if (index < 10) {
-      const summary = await generateAISummary(item.title, item.description);
-      return { ...item, ai_summary: summary };
-    }
-    return item;
-  })
-);
+    const { error } = await supabase
+      .from("trends")
+      .upsert(dataWithAI, { onConflict: 'link' });
 
-// 使用处理后的 dataWithAI 进行 upsert
-const { error } = await supabase.from("trends").upsert(dataWithAI, { onConflict: 'link' });
-if (error) throw error;
+    if (error) throw error;
 
     console.log(`[${config.name}] 同步成功`);
     return true;
