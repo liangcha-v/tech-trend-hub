@@ -121,7 +121,7 @@ export function TrendList({
         })
       ) : (
         <div className="col-span-full text-center py-20 text-muted-foreground">
-          {showFavoritesOnly ? "你还没有收藏内容，先去主页收藏一些卡片吧。" : "该分类下暂无带 AI 总结的内容，请运行 API 同步数据。"}
+          {showFavoritesOnly ? "你还没有收藏内容，先去主页收藏一些卡片吧。" : "该分类下暂无内容，请运行 API 同步数据。"}
         </div>
       )}
     </div>
