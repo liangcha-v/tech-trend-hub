@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { Bookmark, ExternalLink, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-const FAVORITES_KEY = "techtrend-favorites"
+import { supabase } from "@/lib/supabase"
 
 type TrendItem = {
   id: number
@@ -16,22 +15,7 @@ type TrendItem = {
   link: string
   description: string | null
   ai_summary: string | null
-}
-
-function loadFavorites() {
-  if (typeof window === "undefined") return new Set<number>()
-
-  try {
-    const raw = window.localStorage.getItem(FAVORITES_KEY)
-    if (!raw) return new Set<number>()
-
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return new Set<number>()
-
-    return new Set(parsed.filter((id) => typeof id === "number"))
-  } catch {
-    return new Set<number>()
-  }
+  is_favorite: boolean | null
 }
 
 export function TrendList({
@@ -41,22 +25,52 @@ export function TrendList({
   trends: TrendItem[]
   showFavoritesOnly: boolean
 }) {
-  const [favoriteIds, setFavoriteIds] = React.useState<Set<number>>(new Set())
+  const [favoriteIds, setFavoriteIds] = React.useState<Set<number>>(
+    new Set(trends.filter((item) => item.is_favorite).map((item) => item.id))
+  )
+  const [pendingIds, setPendingIds] = React.useState<Set<number>>(new Set())
 
   React.useEffect(() => {
-    setFavoriteIds(loadFavorites())
-  }, [])
+    setFavoriteIds(new Set(trends.filter((item) => item.is_favorite).map((item) => item.id)))
+  }, [trends])
 
-  const toggleFavorite = (id: number) => {
+  const toggleFavorite = async (id: number) => {
+    if (pendingIds.has(id)) return
+
+    const nextValue = !favoriteIds.has(id)
+    setPendingIds((prev) => new Set(prev).add(id))
+
     setFavoriteIds((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
+      if (nextValue) {
         next.add(id)
+      } else {
+        next.delete(id)
       }
+      return next
+    })
 
-      window.localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(next)))
+    const { error } = await supabase
+      .from("trends")
+      .update({ is_favorite: nextValue })
+      .eq("id", id)
+
+    if (error) {
+      setFavoriteIds((prev) => {
+        const rollback = new Set(prev)
+        if (nextValue) {
+          rollback.delete(id)
+        } else {
+          rollback.add(id)
+        }
+        return rollback
+      })
+      console.error("收藏状态更新失败:", error.message)
+    }
+
+    setPendingIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
       return next
     })
   }
@@ -109,6 +123,7 @@ export function TrendList({
                   className="h-8 w-8"
                   onClick={() => toggleFavorite(item.id)}
                   aria-label={isFavorite ? "取消收藏" : "收藏"}
+                  disabled={pendingIds.has(item.id)}
                 >
                   <Bookmark className={`h-4 w-4 ${isFavorite ? "fill-current text-primary" : ""}`} />
                 </Button>

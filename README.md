@@ -20,6 +20,15 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Supabase schema update
+
+To persist trend favorites across refreshes, add a boolean column in your `trends` table:
+
+```sql
+alter table public.trends
+add column if not exists is_favorite boolean not null default false;
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

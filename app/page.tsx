@@ -19,6 +19,10 @@ export default async function Home({
     .not("ai_summary", "is", null)
     .neq("ai_summary", "")
 
+  if (showFavoritesOnly) {
+    query = query.eq("is_favorite", true)
+  }
+
   if (!showFavoritesOnly && source && source !== "all") {
     query = query.eq("source", source)
   }
